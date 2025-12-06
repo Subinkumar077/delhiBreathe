@@ -9,53 +9,69 @@ import 'leaflet/dist/leaflet.css';
 
 const MapContent = () => {
     const { data, loading, error } = useFirebaseData();
-    // We can also fetch the location name for the main sensor here if we want to show it in the marker
-    const { location } = useLocationName(data?.lat || 0, data?.lon || 0);
+    
+    // Only fetch location if we have valid data
+    const hasValidData = data && data.lat && data.lon;
+    const { location } = useLocationName(hasValidData ? data.lat : 0, hasValidData ? data.lon : 0);
 
     if (loading) return <LoadingSpinner />;
     if (error) return <div className="text-center p-8 text-red-500">Error loading sensor data. Please check connection.</div>;
+    
+    // If no data at all, show a message
+    if (!data) {
+        return <div className="text-center p-8 text-gray-500">No sensor data available. Waiting for data...</div>;
+    }
 
     // Ensure we have valid numbers for coordinates
-    const lat = Number(data?.lat);
-    const lon = Number(data?.lon);
-    const isValidCoord = !isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0;
+    const lat = Number(data.lat);
+    const lon = Number(data.lon);
+    
+    // Validate coordinates: must be valid numbers, not 0, and within valid lat/lon ranges
+    const isValidCoord = !isNaN(lat) && !isNaN(lon) && 
+                         lat !== 0 && lon !== 0 &&
+                         lat >= -90 && lat <= 90 &&
+                         lon >= -180 && lon <= 180;
 
     // Default center (New Delhi)
     const defaultCenter: [number, number] = [28.6139, 77.2090];
     const center: [number, number] = isValidCoord ? [lat, lon] : defaultCenter;
 
-    return (
-        <div className="w-full relative map-container-height -mt-4 sm:mt-0">
-            {/* Search bar overlay */}
-            <div className="absolute top-4 left-4 right-4 sm:right-auto z-[1000] w-auto sm:w-80 shadow-lg rounded-xl">
-                <SearchBar />
-            </div>
-
-            <LeafletMap
-                center={center}
-                zoom={13}
-                className="w-full h-full z-0 outline-none"
-                scrollWheelZoom={true}
-            >
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-
-                {data && isValidCoord && (
-                    <MapMarker
-                        position={[lat, lon]}
-                        aqi={data.aqi}
-                        location={location?.formatted || 'Live Sensor Location'}
-                        pm25={data.pm25}
-                        pm10={data.pm10}
-                        timestamp={data.timestamp}
-                        isCurrentSensor={true}
+    try {
+        return (
+            <div className="w-full relative map-container-height -mt-4 sm:mt-0">
+                <LeafletMap
+                    center={center}
+                    zoom={13}
+                    className="w-full h-full z-0 outline-none"
+                    scrollWheelZoom={true}
+                    key={`${center[0]}-${center[1]}`}
+                >
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
-                )}
-            </LeafletMap>
-        </div>
-    );
+
+                    {/* Search bar must be inside MapContainer to use useMap hook */}
+                    <SearchBar />
+
+                    {data && isValidCoord && (
+                        <MapMarker
+                            position={[lat, lon]}
+                            aqi={data.aqi}
+                            location={location?.formatted || 'Live Sensor Location'}
+                            pm25={data.pm25}
+                            pm10={data.pm10}
+                            timestamp={data.timestamp}
+                            isCurrentSensor={true}
+                        />
+                    )}
+                </LeafletMap>
+            </div>
+        );
+    } catch (err) {
+        console.error('Map rendering error:', err);
+        return <div className="text-center p-8 text-red-500">Error rendering map. Please refresh the page.</div>;
+    }
 };
 
 export default function AirPollutionMap() {

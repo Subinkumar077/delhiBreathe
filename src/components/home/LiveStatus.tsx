@@ -20,7 +20,7 @@ export default function LiveStatus({ connected, lastUpdate }: LiveStatusProps) {
             </span>
             {lastUpdate && connected && (
                 <span className="text-[10px] text-gray-500 border-l pl-2 ml-1">
-                    {new Date(lastUpdate).toLocaleTimeString()}
+                    {new Date(lastUpdate > 946684800000 ? lastUpdate : Date.now()).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}
                 </span>
             )}
         </div>
