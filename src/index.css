@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-gray-800 font-sans;
+  }
+}
+
+/* Custom Leaflet overrides */
+.leaflet-popup-content-wrapper {
+  @apply rounded-xl shadow-lg border-0;
+}
+
+.leaflet-popup-content {
+  @apply m-0;
+}
+
+/* Map Container Responsive Height */
+.map-container-height {
+  height: calc(100vh - 120px);
+  /* Mobile default */
+}
+
+@media (min-width: 640px) {
+  .map-container-height {
+    height: calc(100vh - 64px);
+    /* Desktop: 100vh - navbar(64px) */
+  }
+}
+
+/* Custom Marker Pulse */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
