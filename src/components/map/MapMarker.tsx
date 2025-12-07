@@ -58,42 +58,54 @@ export default function MapMarker({
             position={position}
             icon={customIcon(aqi, isCurrentSensor)}
         >
-            <Popup closeButton={false} offset={[0, -10]}>
-                <div className="p-2 min-w-[200px]">
-                    {/* Location name instead of coordinates */}
-                    <h3 className="font-bold text-lg mb-2 text-gray-900">{location || 'Sensor Location'}</h3>
+            <Popup 
+                closeButton={true} 
+                offset={[0, -10]}
+                className="custom-popup"
+            >
+                <div className="p-3 min-w-[220px]">
+                    {/* Location name */}
+                    <h3 className="font-bold text-base mb-3 text-gray-900 pr-4">{location || 'Sensor Location'}</h3>
 
-                    {/* AQI display */}
+                    {/* AQI display with enhanced styling */}
                     <div
-                        className="text-center p-3 rounded-lg mb-3 shadow-sm"
-                        style={{ backgroundColor: color, color: 'white' }}
+                        className="text-center p-4 rounded-xl mb-3 shadow-md"
+                        style={{ 
+                            backgroundColor: color, 
+                            color: 'white',
+                            boxShadow: `0 4px 12px ${color}40`
+                        }}
                     >
-                        <div className="text-3xl font-bold">{aqi}</div>
-                        <div className="text-sm font-medium opacity-90">{category}</div>
+                        <div className="text-4xl font-bold mb-1">{aqi}</div>
+                        <div className="text-sm font-semibold opacity-95 uppercase tracking-wide">{category}</div>
                     </div>
 
-                    {/* Pollutant details */}
-                    <div className="space-y-1.5 text-sm">
-                        <div className="flex justify-between items-center text-gray-700">
-                            <span className="text-gray-500">PM2.5</span>
-                            <span className="font-semibold">{pm25} µg/m³</span>
+                    {/* Pollutant details with better spacing */}
+                    <div className="space-y-2 text-sm bg-gray-50 rounded-lg p-3 mb-3">
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-600 font-medium">PM2.5</span>
+                            <span className="font-bold text-gray-900">{pm25} <span className="text-xs text-gray-500">µg/m³</span></span>
                         </div>
-                        <div className="flex justify-between items-center text-gray-700">
-                            <span className="text-gray-500">PM10</span>
-                            <span className="font-semibold">{pm10} µg/m³</span>
-                        </div>
-                        <div className="text-xs text-gray-400 mt-2 text-right pt-2 border-t border-gray-100">
-                            Updated {formatRelativeTime(timestamp)}
+                        <div className="h-px bg-gray-200"></div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-600 font-medium">PM10</span>
+                            <span className="font-bold text-gray-900">{pm10} <span className="text-xs text-gray-500">µg/m³</span></span>
                         </div>
                     </div>
 
+                    {/* Timestamp */}
+                    <div className="text-xs text-gray-500 text-center mb-2">
+                        Updated {formatRelativeTime(timestamp)}
+                    </div>
+
+                    {/* Live indicator */}
                     {isCurrentSensor && (
-                        <div className="mt-3 text-xs bg-green-50 text-green-700 font-semibold px-2 py-1.5 rounded-md text-center border border-green-100 flex items-center justify-center gap-1">
+                        <div className="text-xs bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 font-semibold px-3 py-2 rounded-lg text-center border border-green-200 flex items-center justify-center gap-2">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                             </span>
-                            Live Sensor Feed
+                            <span>Live Sensor Feed</span>
                         </div>
                     )}
                 </div>

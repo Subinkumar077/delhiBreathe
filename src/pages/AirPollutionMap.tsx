@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useFirebaseData } from '../hooks/useFirebaseData';
 import { useLocationName } from '../hooks/useLocationName';
 import SearchBar from '../components/map/SearchBar';
 import MapMarker from '../components/map/MapMarker';
+import MapControls from '../components/map/MapControls';
+import MapLegend from '../components/map/MapLegend';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ErrorBoundary from '../components/shared/ErrorBoundary';
 import { MapContainer as LeafletMap, TileLayer } from 'react-leaflet';
@@ -9,6 +12,7 @@ import 'leaflet/dist/leaflet.css';
 
 const MapContent = () => {
     const { data, loading, error } = useFirebaseData();
+    const [mapLayer, setMapLayer] = useState<'street' | 'satellite'>('street');
     
     // Only fetch location if we have valid data
     const hasValidData = data && data.lat && data.lon;
@@ -36,6 +40,20 @@ const MapContent = () => {
     const defaultCenter: [number, number] = [28.6139, 77.2090];
     const center: [number, number] = isValidCoord ? [lat, lon] : defaultCenter;
 
+    // Map tile configurations
+    const tileConfigs = {
+        street: {
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        },
+        satellite: {
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
+        }
+    };
+
+    const currentTileConfig = tileConfigs[mapLayer];
+
     try {
         return (
             <div className="w-full relative map-container-height -mt-4 sm:mt-0">
@@ -44,15 +62,26 @@ const MapContent = () => {
                     zoom={13}
                     className="w-full h-full z-0 outline-none"
                     scrollWheelZoom={true}
+                    zoomControl={false}
                     key={`${center[0]}-${center[1]}`}
                 >
                     <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution={currentTileConfig.attribution}
+                        url={currentTileConfig.url}
+                        key={mapLayer}
                     />
 
                     {/* Search bar must be inside MapContainer to use useMap hook */}
                     <SearchBar />
+
+                    {/* Map Controls */}
+                    <MapControls 
+                        onLayerChange={setMapLayer}
+                        currentLayer={mapLayer}
+                    />
+
+                    {/* AQI Legend */}
+                    <MapLegend />
 
                     {data && isValidCoord && (
                         <MapMarker

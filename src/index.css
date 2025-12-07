@@ -10,11 +10,28 @@
 
 /* Custom Leaflet overrides */
 .leaflet-popup-content-wrapper {
-  @apply rounded-xl shadow-lg border-0;
+  @apply rounded-xl shadow-2xl border-0;
+  padding: 0 !important;
 }
 
 .leaflet-popup-content {
   @apply m-0;
+  width: auto !important;
+}
+
+.leaflet-popup-tip {
+  @apply shadow-lg;
+}
+
+.leaflet-container {
+  @apply font-sans;
+}
+
+/* Custom popup close button */
+.leaflet-popup-close-button {
+  @apply text-gray-400 hover:text-gray-600 transition-colors;
+  font-size: 24px !important;
+  padding: 8px 12px !important;
 }
 
 /* Map Container Responsive Height */
@@ -34,4 +51,15 @@
 .custom-marker {
   background: transparent !important;
   border: none !important;
+}
+
+/* Smooth transitions for map controls */
+.leaflet-control-zoom a,
+.leaflet-bar a {
+  @apply transition-all duration-200;
+}
+
+/* Hide default zoom controls since we have custom ones */
+.leaflet-control-zoom {
+  display: none !important;
 }
