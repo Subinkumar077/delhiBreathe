@@ -2,14 +2,11 @@ import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { getAqiColor, getAqiCategory } from '../../utils/aqiColors';
 import { formatRelativeTime } from '../../utils/formatters';
+import type { SensorReading } from '../../types/sensor';
 
 interface MapMarkerProps {
-    position: [number, number];
-    aqi: number;
+    data: SensorReading;
     location?: string;
-    pm25: number;
-    pm10: number;
-    timestamp: number;
     isCurrentSensor?: boolean;
 }
 
@@ -42,24 +39,21 @@ const customIcon = (aqi: number, isLive: boolean = false) => {
 };
 
 export default function MapMarker({
-    position,
-    aqi,
+    data,
     location,
-    pm25,
-    pm10,
-    timestamp,
     isCurrentSensor
 }: MapMarkerProps) {
+    const { aqi, pm25, pm10, timestamp, lat, lon } = data;
     const color = getAqiColor(aqi);
     const category = getAqiCategory(aqi);
 
     return (
         <Marker
-            position={position}
+            position={[lat, lon]}
             icon={customIcon(aqi, isCurrentSensor)}
         >
-            <Popup 
-                closeButton={true} 
+            <Popup
+                closeButton={true}
                 offset={[0, -10]}
                 className="custom-popup"
             >
@@ -70,8 +64,8 @@ export default function MapMarker({
                     {/* AQI display with enhanced styling */}
                     <div
                         className="text-center p-4 rounded-xl mb-3 shadow-md"
-                        style={{ 
-                            backgroundColor: color, 
+                        style={{
+                            backgroundColor: color,
                             color: 'white',
                             boxShadow: `0 4px 12px ${color}40`
                         }}

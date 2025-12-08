@@ -1,5 +1,5 @@
 import type { SensorReading } from '../../types/sensor';
-import { getAqiColor, getAqiGradient, getHealthMessage } from '../../utils/aqiColors';
+import { getAqiGradient, getHealthMessage } from '../../utils/aqiColors';
 import { formatTimestamp } from '../../utils/formatters';
 import { Activity } from 'lucide-react';
 
