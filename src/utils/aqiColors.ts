@@ -1,10 +1,10 @@
 export const getAqiColor = (aqi: number): string => {
-    if (aqi <= 50) return '#4CAF50';      // Good - Green
-    if (aqi <= 100) return '#FFEB3B';     // Moderate - Yellow
-    if (aqi <= 150) return '#FF9800';     // Poor - Orange
-    if (aqi <= 200) return '#F44336';     // Unhealthy - Red
-    if (aqi <= 300) return '#9C27B0';     // Severe - Purple
-    return '#7B1FA2';                      // Hazardous - Dark Purple
+    if (aqi <= 50) return '#00E400';      // Good
+    if (aqi <= 100) return '#FFFF00';     // Moderate
+    if (aqi <= 150) return '#FF7E00';     // Poor (Unhealthy for Sensitive Groups)
+    if (aqi <= 200) return '#ba4444';     // Unhealthy
+    if (aqi <= 300) return '#8F3F97';     // Severe (Very Unhealthy)
+    return '#FF0000';                      // Hazardous
 };
 
 export const getAqiCategory = (aqi: number): string => {
@@ -17,30 +17,30 @@ export const getAqiCategory = (aqi: number): string => {
 };
 
 export const getAqiGradient = (aqi: number): string => {
-    const color = getAqiColor(aqi);
-    // Simple darkening for gradient effect
-    return `linear-gradient(135deg, ${color} 0%, ${adjustBrightness(color, -20)} 100%)`;
-};
-
-// Helper to darken hex color
-function adjustBrightness(col: string, amt: number) {
-    let usePound = false;
-    if (col[0] == "#") {
-        col = col.slice(1);
-        usePound = true;
+    // Enhanced gradients with multiple color stops for better visual appeal
+    if (aqi <= 50) {
+        // Good - Green gradient
+        return 'linear-gradient(135deg, #00E400 0%, #00B300 50%, #008F00 100%)';
     }
-    const num = parseInt(col, 16);
-    let r = (num >> 16) + amt;
-    if (r > 255) r = 255;
-    else if (r < 0) r = 0;
-    let b = ((num >> 8) & 0x00FF) + amt;
-    if (b > 255) b = 255;
-    else if (b < 0) b = 0;
-    let g = (num & 0x0000FF) + amt;
-    if (g > 255) g = 255;
-    else if (g < 0) g = 0;
-    return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16);
-}
+    if (aqi <= 100) {
+        // Moderate - Yellow gradient
+        return 'linear-gradient(135deg, #FFFF00 0%, #FFD700 50%, #FFA500 100%)';
+    }
+    if (aqi <= 150) {
+        // Poor - Orange gradient
+        return 'linear-gradient(135deg, #FF7E00 0%, #FF6B00 50%, #FF4500 100%)';
+    }
+    if (aqi <= 200) {
+        // Unhealthy - Red/Pink gradient
+        return 'linear-gradient(135deg, #E74C3C 0%, #C0392B 50%, #A93226 100%)';
+    }
+    if (aqi <= 300) {
+        // Severe - Purple gradient
+        return 'linear-gradient(135deg, #8F3F97 0%, #7D3C98 50%, #6C3483 100%)';
+    }
+    // Hazardous - Deep Red gradient (similar to pollutant cards)
+    return 'linear-gradient(135deg, #FF0000 0%, #DC143C 30%, #C41E3A 60%, #8B0000 100%)';
+};
 
 export const getHealthMessage = (category: string): string => {
     const messages: Record<string, string> = {

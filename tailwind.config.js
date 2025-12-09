@@ -8,12 +8,12 @@ export default {
         extend: {
             colors: {
                 aqi: {
-                    good: '#4CAF50',
-                    adequate: '#8BC34A',
-                    moderate: '#FFC107',
-                    poor: '#FF5722',
-                    verypoor: '#F44336',
-                    severe: '#9C27B0',
+                    good: '#00E400',
+                    moderate: '#FFFF00',
+                    unhealthy_sensitive: '#FF7E00',
+                    unhealthy: '#FF0000',
+                    very_unhealthy: '#8F3F97',
+                    hazardous: '#7E0023',
                 },
                 primary: '#667eea',
                 secondary: '#764ba2',

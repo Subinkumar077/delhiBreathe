@@ -10,38 +10,47 @@ interface AQIHeroProps {
 export default function AQIHero({ data }: AQIHeroProps) {
     return (
         <div
-            className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl transition-all hover:shadow-2xl hover:scale-[1.01]"
-            style={{ background: getAqiGradient(data.aqi) }}
+            className="relative overflow-hidden rounded-3xl p-6 text-white shadow-sm transition-colors hover:shadow-lg flex flex-col justify-between"
+            style={{ 
+                background: getAqiGradient(data.aqi),
+                height: '350px'
+            }}
         >
-            <div className="absolute top-0 right-0 p-3 opacity-10">
-                <Activity size={200} />
+            {/* Background Icon */}
+            <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none">
+                <Activity size={180} className="hidden sm:block" />
+                <Activity size={120} className="block sm:hidden" />
             </div>
 
-            <div className="relative z-10">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h2 className="text-lg sm:text-xl font-medium opacity-90">Current Air Quality</h2>
-                        <p className="text-sm opacity-75 mt-1">
+            {/* Content */}
+            <div className="relative z-10 flex flex-col justify-between" style={{ height: '100%' }}>
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div className="flex-1">
+                        <h2 className="text-base sm:text-lg font-medium opacity-90">Current Air Quality</h2>
+                        <p className="text-xs opacity-75 mt-0.5">
                             Last updated: {formatTimestamp(data.timestamp)}
                         </p>
                     </div>
-                    <div className="bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-sm font-semibold border border-white/20">
+                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/20 whitespace-nowrap">
                         {data.aqiCategory}
                     </div>
                 </div>
 
-                <div className="my-8">
+                {/* AQI Value */}
+                <div className="flex items-center justify-start my-4">
                     <div className="flex items-baseline gap-2">
-                        <span className="text-7xl sm:text-9xl font-bold tracking-tighter">
+                        <span className="text-7xl sm:text-8xl font-bold tracking-tighter leading-none">
                             {data.aqi}
                         </span>
                         <span className="text-2xl sm:text-3xl font-medium opacity-80">AQI</span>
                     </div>
                 </div>
 
-                <div className="bg-black/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                    <p className="text-sm sm:text-base leading-relaxed font-medium">
-                        Health Advisory: {getHealthMessage(data.aqiCategory)}
+                {/* Health Advisory */}
+                <div className="bg-black/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                    <p className="text-xs sm:text-sm leading-relaxed font-medium">
+                        <span className="font-semibold">Health Advisory:</span> {getHealthMessage(data.aqiCategory)}
                     </p>
                 </div>
             </div>
