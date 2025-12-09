@@ -2,35 +2,99 @@ import { useState, useEffect } from 'react';
 import { ref, query, orderByChild, limitToLast, onValue } from 'firebase/database';
 import { database } from '../../services/firebase';
 import type { SensorReading } from '../../types/sensor';
-import { TrendingUp, Clock } from 'lucide-react';
+import { TrendingUp, ChevronDown } from 'lucide-react';
+import { CITIES, generateMockData } from '../../data/mockCityData';
 
-export default function AQITrendGraph() {
+type TimePeriod = '12h' | '24h' | '7d' | '30d' | '1y';
+type CityKey = 'pune' | 'delhi' | 'mumbai' | 'kolkata' | 'chennai' | 'hyderabad' | 'ahmedabad' | 'lucknow';
+
+interface AQITrendGraphProps {
+    onCityChange?: (city: CityKey, currentAQI: number) => void;
+}
+
+export default function AQITrendGraph({ onCityChange }: AQITrendGraphProps) {
     const [historicalData, setHistoricalData] = useState<{ timestamp: number; aqi: number }[]>([]);
     const [loading, setLoading] = useState(true);
-    const [timeRange, setTimeRange] = useState<'24h' | '12h' | '6h'>('24h');
+    const [timePeriod, setTimePeriod] = useState<TimePeriod>('12h');
+    const [selectedCity, setSelectedCity] = useState<CityKey>('pune');
+    const [showTimePeriodMenu, setShowTimePeriodMenu] = useState(false);
+    const [showCityMenu, setShowCityMenu] = useState(false);
+
+    const timePeriodLabels: Record<TimePeriod, string> = {
+        '12h': '12 Hours',
+        '24h': '24 Hours',
+        '7d': '7 Days',
+        '30d': '30 Days',
+        '1y': '1 Year'
+    };
 
     useEffect(() => {
-        // Fetch readings based on time range
-        const limit = timeRange === '24h' ? 48 : timeRange === '12h' ? 24 : 12;
-        const readingsRef = ref(database, 'readings');
-        const recentQuery = query(readingsRef, orderByChild('timestamp'), limitToLast(limit));
+        setLoading(true);
 
-        const unsubscribe = onValue(recentQuery, (snapshot) => {
-            const data: { timestamp: number; aqi: number }[] = [];
-            snapshot.forEach((child) => {
-                const reading = child.val() as SensorReading;
-                data.push({
-                    timestamp: reading.timestamp,
-                    aqi: reading.aqi
+        // Determine data point count based on time period
+        let dataPointCount: number;
+        switch (timePeriod) {
+            case '12h':
+                dataPointCount = 24;
+                break;
+            case '24h':
+                dataPointCount = 48;
+                break;
+            case '7d':
+                dataPointCount = 84; // 12 points per day
+                break;
+            case '30d':
+                dataPointCount = 120; // 4 points per day
+                break;
+            case '1y':
+                dataPointCount = 365; // 1 point per day
+                break;
+        }
+
+        if (selectedCity === 'pune') {
+            // Fetch real data from Firebase for Pune
+            const readingsRef = ref(database, 'readings');
+            const recentQuery = query(readingsRef, orderByChild('timestamp'), limitToLast(dataPointCount));
+
+            const unsubscribe = onValue(recentQuery, (snapshot) => {
+                const data: { timestamp: number; aqi: number }[] = [];
+                snapshot.forEach((child) => {
+                    const reading = child.val() as SensorReading;
+                    // Validate timestamp
+                    if (reading.timestamp && reading.timestamp > 0) {
+                        data.push({
+                            timestamp: reading.timestamp,
+                            aqi: reading.aqi
+                        });
+                    }
                 });
+                
+                // If no valid data from Firebase, use mock data
+                if (data.length === 0) {
+                    const mockData = generateMockData('pune', timePeriod, dataPointCount);
+                    setHistoricalData(mockData);
+                } else {
+                    setHistoricalData(data.sort((a, b) => a.timestamp - b.timestamp));
+                }
+                setLoading(false);
             });
-            
-            setHistoricalData(data.sort((a, b) => a.timestamp - b.timestamp));
-            setLoading(false);
-        });
 
-        return () => unsubscribe();
-    }, [timeRange]);
+            return () => unsubscribe();
+        } else {
+            // Use mock data for other cities
+            const mockData = generateMockData(selectedCity, timePeriod, dataPointCount);
+            setHistoricalData(mockData);
+            setLoading(false);
+        }
+    }, [timePeriod, selectedCity]);
+
+    // Notify parent component of city change and current AQI
+    useEffect(() => {
+        if (onCityChange && historicalData.length > 0) {
+            const currentAQI = historicalData[historicalData.length - 1].aqi;
+            onCityChange(selectedCity, currentAQI);
+        }
+    }, [selectedCity, historicalData, onCityChange]);
 
     if (loading) {
         return (
@@ -74,22 +138,37 @@ export default function AQITrendGraph() {
         return '#FF0000';
     };
 
-    // Format time labels
+    // Format time labels based on period
     const formatTime = (timestamp: number): string => {
         const date = new Date(timestamp);
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+        if (timePeriod === '12h' || timePeriod === '24h') {
+            return date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+        } else if (timePeriod === '7d') {
+            return date.toLocaleDateString('en-US', { weekday: 'short' });
+        } else if (timePeriod === '30d') {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } else {
+            return date.toLocaleDateString('en-US', { month: 'short' });
+        }
     };
 
-    // Get time labels for x-axis
+    // Get time labels for x-axis - show more distributed labels
     const getTimeLabels = () => {
         if (historicalData.length === 0) return [];
         const labels = [];
-        const step = Math.floor(historicalData.length / 6);
-        for (let i = 0; i < historicalData.length; i += step) {
-            labels.push({
-                index: i,
-                time: formatTime(historicalData[i].timestamp)
-            });
+        const labelCount = Math.min(8, historicalData.length); // Show up to 8 labels
+        
+        for (let i = 0; i < labelCount; i++) {
+            const index = Math.floor((i * (historicalData.length - 1)) / (labelCount - 1));
+            const timestamp = historicalData[index]?.timestamp;
+            
+            // Validate timestamp
+            if (timestamp && timestamp > 0) {
+                labels.push({
+                    index,
+                    time: formatTime(timestamp)
+                });
+            }
         }
         return labels;
     };
@@ -98,33 +177,83 @@ export default function AQITrendGraph() {
 
     return (
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
-            {/* Header */}
+            {/* Header with Controls */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-xl">
                         <TrendingUp className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">AQI Trend</h2>
-                        <p className="text-sm text-gray-500">Air quality over time</p>
+                        <h2 className="text-xl font-bold text-gray-900">Historical Air Quality Data</h2>
+                        <p className="text-sm text-gray-500">{CITIES[selectedCity].name}</p>
                     </div>
                 </div>
 
-                {/* Time Range Selector */}
-                <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
-                    {(['6h', '12h', '24h'] as const).map((range) => (
+                {/* Controls */}
+                <div className="flex gap-2">
+                    {/* City Selector */}
+                    <div className="relative">
                         <button
-                            key={range}
-                            onClick={() => setTimeRange(range)}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                                timeRange === range
-                                    ? 'bg-white text-primary shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900'
-                            }`}
+                            onClick={() => {
+                                setShowCityMenu(!showCityMenu);
+                                setShowTimePeriodMenu(false);
+                            }}
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                         >
-                            {range}
+                            {CITIES[selectedCity].name}
+                            <ChevronDown className="w-4 h-4" />
                         </button>
-                    ))}
+                        {showCityMenu && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                {(Object.keys(CITIES) as CityKey[]).map((cityKey) => (
+                                    <button
+                                        key={cityKey}
+                                        onClick={() => {
+                                            setSelectedCity(cityKey);
+                                            setShowCityMenu(false);
+                                        }}
+                                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors ${
+                                            selectedCity === cityKey ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-700'
+                                        }`}
+                                    >
+                                        {CITIES[cityKey].name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Time Period Selector */}
+                    <div className="relative">
+                        <button
+                            onClick={() => {
+                                setShowTimePeriodMenu(!showTimePeriodMenu);
+                                setShowCityMenu(false);
+                            }}
+                            className="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        >
+                            {timePeriodLabels[timePeriod]}
+                            <ChevronDown className="w-4 h-4" />
+                        </button>
+                        {showTimePeriodMenu && (
+                            <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                {(Object.keys(timePeriodLabels) as TimePeriod[]).map((period) => (
+                                    <button
+                                        key={period}
+                                        onClick={() => {
+                                            setTimePeriod(period);
+                                            setShowTimePeriodMenu(false);
+                                        }}
+                                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors ${
+                                            timePeriod === period ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-700'
+                                        }`}
+                                    >
+                                        {timePeriodLabels[period]}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -150,28 +279,28 @@ export default function AQITrendGraph() {
 
             {/* Graph */}
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200">
-                <div className="relative" style={{ height: '300px' }}>
-                    <svg className="w-full h-full" viewBox="0 0 1000 300" preserveAspectRatio="none">
+                <div className="relative" style={{ height: '350px' }}>
+                    <svg className="w-full h-full" viewBox="0 0 1000 350" preserveAspectRatio="xMidYMid meet">
                         {/* Background grid lines */}
-                        {[0, 50, 100, 150, 200, 250, 300, 400, 500].map((aqiLevel) => {
-                            const y = 280 - ((aqiLevel - minValue) / range) * 260;
-                            if (y >= 20 && y <= 280) {
+                        {[0, 50, 100, 150, 200, 250].map((aqiLevel) => {
+                            const y = 310 - ((aqiLevel - minValue) / range) * 280;
+                            if (y >= 20 && y <= 310) {
                                 return (
                                     <g key={aqiLevel}>
                                         <line
-                                            x1="40"
+                                            x1="50"
                                             y1={y}
-                                            x2="1000"
+                                            x2="980"
                                             y2={y}
-                                            stroke="#e5e7eb"
+                                            stroke="#E5E7EB"
                                             strokeWidth="1"
-                                            strokeDasharray="4,4"
+                                            opacity="0.8"
                                         />
                                         <text
-                                            x="5"
+                                            x="10"
                                             y={y + 4}
-                                            fontSize="12"
-                                            fill="#6b7280"
+                                            fontSize="11"
+                                            fill="#6B7280"
                                             fontWeight="500"
                                         >
                                             {aqiLevel}
@@ -182,122 +311,112 @@ export default function AQITrendGraph() {
                             return null;
                         })}
 
-                        {/* AQI category background zones */}
-                        <defs>
-                            <linearGradient id="aqiGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stopColor="#FF0000" stopOpacity="0.1" />
-                                <stop offset="20%" stopColor="#8F3F97" stopOpacity="0.1" />
-                                <stop offset="40%" stopColor="#ba4444ff" stopOpacity="0.1" />
-                                <stop offset="60%" stopColor="#FF7E00" stopOpacity="0.1" />
-                                <stop offset="80%" stopColor="#FFFF00" stopOpacity="0.1" />
-                                <stop offset="100%" stopColor="#00E400" stopOpacity="0.1" />
-                            </linearGradient>
-                        </defs>
+                        {/* Y-axis label */}
+                        <text
+                            x="15"
+                            y="15"
+                            fontSize="12"
+                            fill="#374151"
+                            fontWeight="600"
+                        >
+                            AQI
+                        </text>
 
-                        {/* Area fill under the line */}
-                        <polygon
-                            fill="url(#areaGradient)"
-                            points={
-                                historicalData.map((point, index) => {
-                                    const x = 40 + (index / (historicalData.length - 1)) * 960;
-                                    const y = 280 - ((point.aqi - minValue) / range) * 260;
-                                    return `${x},${y}`;
-                                }).join(' ') + ' 1000,280 40,280'
-                            }
-                        />
-
-                        {/* Main line */}
-                        <polyline
-                            fill="none"
-                            stroke="url(#lineGradient)"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            points={historicalData.map((point, index) => {
-                                const x = 40 + (index / (historicalData.length - 1)) * 960;
-                                const y = 280 - ((point.aqi - minValue) / range) * 260;
-                                return `${x},${y}`;
-                            }).join(' ')}
-                        />
-
-                        {/* Data points */}
+                        {/* Bar chart */}
                         {historicalData.map((point, index) => {
-                            const x = 40 + (index / (historicalData.length - 1)) * 960;
-                            const y = 280 - ((point.aqi - minValue) / range) * 260;
+                            const barWidth = Math.max(8, 900 / historicalData.length - 2);
+                            const x = 60 + (index * (920 / historicalData.length));
+                            const barHeight = ((point.aqi - minValue) / range) * 280;
+                            const y = 310 - barHeight;
                             const color = getAQIColor(point.aqi);
                             
                             return (
                                 <g key={index}>
-                                    <circle
-                                        cx={x}
-                                        cy={y}
-                                        r="4"
+                                    {/* Bar */}
+                                    <rect
+                                        x={x}
+                                        y={y}
+                                        width={barWidth}
+                                        height={barHeight}
                                         fill={color}
-                                        stroke="white"
-                                        strokeWidth="2"
+                                        rx="2"
+                                        opacity="0.9"
                                     />
+                                    {/* Highlight on last bar */}
+                                    {index === historicalData.length - 1 && (
+                                        <rect
+                                            x={x}
+                                            y={y}
+                                            width={barWidth}
+                                            height={barHeight}
+                                            fill="white"
+                                            rx="2"
+                                            opacity="0.3"
+                                        >
+                                            <animate
+                                                attributeName="opacity"
+                                                values="0.3;0.5;0.3"
+                                                dur="2s"
+                                                repeatCount="indefinite"
+                                            />
+                                        </rect>
+                                    )}
                                 </g>
                             );
                         })}
 
-                        {/* Current value indicator */}
-                        {historicalData.length > 0 && (
-                            <g>
-                                <circle
-                                    cx={40 + 960}
-                                    cy={280 - ((currentAQI - minValue) / range) * 260}
-                                    r="6"
-                                    fill={getAQIColor(currentAQI)}
-                                    stroke="white"
-                                    strokeWidth="3"
-                                />
-                                <circle
-                                    cx={40 + 960}
-                                    cy={280 - ((currentAQI - minValue) / range) * 260}
-                                    r="10"
-                                    fill={getAQIColor(currentAQI)}
-                                    opacity="0.3"
-                                >
-                                    <animate
-                                        attributeName="r"
-                                        from="10"
-                                        to="16"
-                                        dur="1.5s"
-                                        repeatCount="indefinite"
-                                    />
-                                    <animate
-                                        attributeName="opacity"
-                                        from="0.3"
-                                        to="0"
-                                        dur="1.5s"
-                                        repeatCount="indefinite"
-                                    />
-                                </circle>
-                            </g>
-                        )}
+                        {/* X-axis line */}
+                        <line
+                            x1="50"
+                            y1="310"
+                            x2="980"
+                            y2="310"
+                            stroke="#9CA3AF"
+                            strokeWidth="2"
+                        />
 
-                        <defs>
-                            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#3B82F6" />
-                                <stop offset="50%" stopColor="#8B5CF6" />
-                                <stop offset="100%" stopColor="#EC4899" />
-                            </linearGradient>
-                            <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.2" />
-                                <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.02" />
-                            </linearGradient>
-                        </defs>
+                        {/* Y-axis line */}
+                        <line
+                            x1="50"
+                            y1="20"
+                            x2="50"
+                            y2="310"
+                            stroke="#9CA3AF"
+                            strokeWidth="2"
+                        />
                     </svg>
                 </div>
 
                 {/* Time labels */}
                 <div className="flex justify-between mt-3 px-2">
                     {timeLabels.map((label, idx) => (
-                        <div key={idx} className="flex items-center gap-1 text-xs text-gray-600">
-                            <Clock className="w-3 h-3" />
-                            <span>{label.time}</span>
+                        <div key={idx} className="text-xs text-gray-600 font-medium">
+                            {label.time}
                         </div>
                     ))}
+                </div>
+
+                {/* Date range labels */}
+                <div className="flex justify-between mt-2 px-2">
+                    {historicalData[0]?.timestamp > 0 && (
+                        <div className="text-xs text-gray-700 font-semibold">
+                            {new Date(historicalData[0].timestamp).toLocaleDateString('en-US', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                year: 'numeric' 
+                            })}
+                        </div>
+                    )}
+                    <div className="text-xs text-gray-600 font-medium">Time</div>
+                    {historicalData[historicalData.length - 1]?.timestamp > 0 && (
+                        <div className="text-xs text-gray-700 font-semibold">
+                            {new Date(historicalData[historicalData.length - 1].timestamp).toLocaleDateString('en-US', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                year: 'numeric' 
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 

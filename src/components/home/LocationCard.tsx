@@ -1,14 +1,23 @@
 import { MapPin, Satellite } from 'lucide-react';
 import { useLocationName } from '../../hooks/useLocationName';
+import { CITIES } from '../../data/mockCityData';
+
+type CityKey = 'pune' | 'delhi' | 'mumbai' | 'kolkata' | 'chennai' | 'hyderabad' | 'ahmedabad' | 'lucknow';
 
 interface LocationCardProps {
     lat: number;
     lon: number;
     sats: number;
+    selectedCity?: CityKey;
+    currentAQI?: number;
 }
 
-export default function LocationCard({ lat, lon, sats }: LocationCardProps) {
+export default function LocationCard({ lat, lon, sats, selectedCity = 'pune', currentAQI }: LocationCardProps) {
     const { location, loading } = useLocationName(lat, lon);
+    
+    // Use selected city data if available
+    const cityData = CITIES[selectedCity];
+    const displayCity = selectedCity === 'pune' ? location : null;
 
     return (
         <div className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between" style={{ height: '165px' }}>
@@ -23,34 +32,45 @@ export default function LocationCard({ lat, lon, sats }: LocationCardProps) {
             </div>
 
             <div className="space-y-2 flex-1 overflow-hidden">
-                {loading ? (
+                {selectedCity === 'pune' && loading ? (
                     <div className="animate-pulse space-y-2">
                         <div className="h-5 bg-gray-200 rounded w-3/4"></div>
                         <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                     </div>
-                ) : location ? (
+                ) : selectedCity === 'pune' && displayCity ? (
                     <>
                         <div className="pb-2 border-b border-gray-50">
                             <div className="text-lg font-bold text-gray-800 leading-tight truncate">
-                                {location.address}
+                                {displayCity.address}
                             </div>
                             <div className="text-sm text-gray-600 mt-0.5 truncate">
-                                {location.city}, {location.state}
+                                {displayCity.city}, {displayCity.state}
                             </div>
                         </div>
                         <div className="text-xs text-gray-500 line-clamp-2">
-                            {location.formatted}
+                            {displayCity.formatted}
                         </div>
                     </>
                 ) : (
-                    <div className="pb-2">
-                        <div className="text-lg font-bold text-gray-800 leading-tight">
-                            Loading location...
+                    <>
+                        <div className="pb-2 border-b border-gray-50">
+                            <div className="text-lg font-bold text-gray-800 leading-tight">
+                                {cityData?.area || 'Unknown Location'}
+                            </div>
+                            <div className="text-sm text-gray-600 mt-0.5">
+                                {cityData?.name || 'City'}, {cityData?.state || 'State'}
+                            </div>
                         </div>
-                        <div className="text-sm text-gray-600 mt-0.5">
-                            Please wait
+                        <div className="text-xs text-gray-500">
+                            Air Quality Monitoring Station
                         </div>
-                    </div>
+                        {currentAQI !== undefined && (
+                            <div className="flex items-center justify-between bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-2 mt-2">
+                                <span className="text-xs font-medium text-gray-700">Current AQI</span>
+                                <span className="text-lg font-bold text-primary">{Math.round(currentAQI)}</span>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 <div className="flex justify-between items-center pt-2">

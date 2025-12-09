@@ -15,7 +15,11 @@ export default function FilterLifeCard() {
 
         const unsubscribe = onValue(filterRef, (snapshot) => {
             const val = snapshot.val();
-            setUsageHours(val || 0);
+            setUsageHours(val !== null ? val : 0);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error reading filter usage:", error);
+            setUsageHours(0); // Default to 0 on error
             setLoading(false);
         });
 
@@ -32,7 +36,13 @@ export default function FilterLifeCard() {
         }
     };
 
-    if (loading) return null;
+    if (loading) {
+        return (
+            <div className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 flex items-center justify-center" style={{ height: '165px' }}>
+                <div className="text-gray-400 text-sm">Loading filter data...</div>
+            </div>
+        );
+    }
 
     const currentUsage = usageHours || 0;
     const percentageRemaining = Math.max(0, 100 - ((currentUsage / MAX_FILTER_LIFE_HOURS) * 100));
