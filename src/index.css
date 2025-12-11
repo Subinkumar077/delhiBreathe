@@ -4,7 +4,10 @@
 
 @layer base {
   body {
-    @apply bg-background text-gray-800 font-sans;
+    @apply text-gray-800 font-sans;
+    background: linear-gradient(135deg, #f1faee 0%, #e8f5e9 50%, #c8e6c9 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 }
 

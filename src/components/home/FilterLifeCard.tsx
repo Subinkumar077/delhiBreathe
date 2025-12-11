@@ -1,141 +1,124 @@
-import { useState, useEffect } from 'react';
-import { ref, onValue, set } from 'firebase/database';
-import { database } from '../../services/firebase';
-import { ShoppingCart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { calculateFilterLife } from '../../utils/predictLife';
+import type { PredictionResult } from '../../utils/predictLife';
+import { useFilterUsage } from '../../hooks/useFilterUsage';
 
-const MAX_FILTER_LIFE_HOURS = 3000;
+const FilterHealthCard: React.FC = () => {
+  const { totalFilterLoad, loading: loadingUsage } = useFilterUsage();
+  const [healthData, setHealthData] = useState<PredictionResult | null>(null);
 
-export default function FilterLifeCard() {
-    const [usageHours, setUsageHours] = useState<number | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [showResetConfirm, setShowResetConfirm] = useState(false);
-
-    useEffect(() => {
-        const filterRef = ref(database, 'system_status/filter_usage_hours');
-
-        const unsubscribe = onValue(filterRef, (snapshot) => {
-            const val = snapshot.val();
-            setUsageHours(val !== null ? val : 0);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error reading filter usage:", error);
-            setUsageHours(0); // Default to 0 on error
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    const handleReset = async () => {
-        try {
-            const filterRef = ref(database, 'system_status/filter_usage_hours');
-            await set(filterRef, 0);
-            setShowResetConfirm(false);
-        } catch (error) {
-            console.error("Failed to reset filter:", error);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 flex items-center justify-center" style={{ height: '165px' }}>
-                <div className="text-gray-400 text-sm">Loading filter data...</div>
-            </div>
-        );
+  useEffect(() => {
+    if (totalFilterLoad > 0) {
+      const result = calculateFilterLife(totalFilterLoad);
+      setHealthData(result);
+    } else {
+      const futureDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+      setHealthData({
+        percentage: '100.0',
+        daysLeft: 365,
+        estimatedDate: futureDate.toDateString()
+      });
     }
+  }, [totalFilterLoad]);
 
-    const currentUsage = usageHours || 0;
-    const percentageRemaining = Math.max(0, 100 - ((currentUsage / MAX_FILTER_LIFE_HOURS) * 100));
-
-    // Calculate days left (Assuming constant usage of 12h/day)
-    const hoursLeft = Math.max(MAX_FILTER_LIFE_HOURS - currentUsage, 0);
-    const daysLeft = Math.ceil(hoursLeft / 12); // 12 hours per day usage
-
-    // Determine color based on percentage
-    let barColor = "#2ECC71"; // Green
-    let bgColor = "bg-green-50";
-    let textColor = "text-green-700";
-    
-    if (percentageRemaining < 25) {
-        barColor = "#E74C3C"; // Red
-        bgColor = "bg-red-50";
-        textColor = "text-red-700";
-    } else if (percentageRemaining < 50) {
-        barColor = "#F1C40F"; // Yellow
-        bgColor = "bg-yellow-50";
-        textColor = "text-yellow-700";
-    }
-
+  if (loadingUsage || !healthData) {
     return (
-        <div className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden" style={{ height: '165px' }}>
-            {/* Header */}
-            <div className="text-center mb-2">
-                <h3 className="text-gray-500 font-semibold text-[10px] tracking-wider uppercase">HEPA Filter Health</h3>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col justify-center">
-                {/* Percentage and Progress Bar Combined */}
-                <div className="mb-2">
-                    <div className="flex items-baseline justify-center gap-1 mb-1">
-                        <span className="text-2xl font-bold text-gray-800">{percentageRemaining.toFixed(0)}</span>
-                        <span className="text-sm font-medium text-gray-500">%</span>
-                    </div>
-                    
-                    {/* Horizontal Progress Bar */}
-                    <div className="w-full px-2">
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                                className="h-full transition-all duration-1000 ease-out rounded-full"
-                                style={{
-                                    width: `${percentageRemaining}%`,
-                                    backgroundColor: barColor
-                                }}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Days Left Display */}
-                <div className={`text-center py-1.5 rounded-lg ${bgColor} mx-2 mb-2`}>
-                    <div className={`text-base font-bold ${textColor} leading-none`}>{daysLeft}</div>
-                    <div className="text-[10px] text-gray-600 mt-0.5">Days Remaining</div>
-                </div>
-            </div>
-
-            {/* Button Area */}
-            <div className="w-full">
-                {!showResetConfirm ? (
-                    percentageRemaining < 10 ? (
-                        <button className="w-full py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-colors text-[10px]">
-                            <ShoppingCart size={12} />
-                            Order Replacement
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => setShowResetConfirm(true)}
-                            className="w-full py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-lg font-medium text-[10px] transition-colors"
-                        >
-                            Reset Counter
-                        </button>
-                    )
-                ) : (
-                    <div className="flex gap-1.5 animate-fade-in">
-                        <button 
-                            onClick={() => setShowResetConfirm(false)} 
-                            className="flex-1 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-[10px] font-semibold text-gray-600 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            onClick={handleReset} 
-                            className="flex-1 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-[10px] font-semibold transition-colors"
-                        >
-                            Confirm
-                        </button>
-                    </div>
-                )}
-            </div>
+      <div style={styles.card}>
+        <div style={styles.loadingContainer}>
+          <p>Loading filter data...</p>
         </div>
+      </div>
     );
-}
+  }
+
+  return (
+    <div style={styles.card}>
+      <h3 style={styles.header}>HEPA Filter Life</h3>
+
+      <div style={styles.progressContainer}>
+        <div style={{ ...styles.progressBar, width: `${healthData.percentage}%` }}></div>
+      </div>
+      <p style={styles.percentText}>{healthData.percentage}% Remaining</p>
+
+      <div style={styles.infoBox}>
+        <p style={styles.infoText}>
+          <strong>Days Remaining:</strong> {healthData.daysLeft} days
+        </p>
+        <p style={styles.infoText}>
+          <strong>Replacement Date:</strong> {healthData.estimatedDate}
+        </p>
+      </div>
+
+      <p style={styles.note}>*Prediction based on real-time data and historical pollution trends.</p>
+    </div>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  card: {
+    backgroundColor: '#f9fafb',
+    border: '1px solid #e5e7eb',
+    borderRadius: '24px',
+    padding: '16px',
+    height: '141px', // Matched with AQIHero (320px) - LocationCard (155px) - Gap (24px)
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between'
+  },
+  header: {
+    margin: '0',
+    color: '#1f2937',
+    fontSize: '14px',
+    fontWeight: '600'
+  },
+  progressContainer: {
+    width: '100%',
+    height: '6px',
+    backgroundColor: '#e5e7eb',
+    borderRadius: '10px',
+    overflow: 'hidden',
+    marginTop: '8px'
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    transition: 'width 0.5s ease',
+    borderRadius: '10px'
+  },
+  percentText: {
+    textAlign: 'right',
+    fontWeight: '600',
+    margin: '4px 0 0 0',
+    fontSize: '12px',
+    color: '#1f2937'
+  },
+  infoBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    flex: 1,
+    justifyContent: 'center'
+  },
+  infoText: {
+    margin: '0',
+    color: '#1f2937',
+    fontSize: '11px'
+  },
+  note: {
+    fontSize: '9px',
+    color: '#9ca3af',
+    margin: '0',
+    lineHeight: '1.2'
+  },
+  loadingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+    color: '#666',
+    fontSize: '13px'
+  }
+};
+
+export default FilterHealthCard;

@@ -1,26 +1,14 @@
-import { MapPin, Satellite } from 'lucide-react';
-import { useLocationName } from '../../hooks/useLocationName';
-import { CITIES } from '../../data/mockCityData';
-
-type CityKey = 'pune' | 'delhi' | 'mumbai' | 'kolkata' | 'chennai' | 'hyderabad' | 'ahmedabad' | 'lucknow';
+import { MapPin } from 'lucide-react';
 
 interface LocationCardProps {
-    lat: number;
-    lon: number;
-    sats: number;
-    selectedCity?: CityKey;
-    currentAQI?: number;
+    lat?: number;
+    lon?: number;
+    sats?: number;
 }
 
-export default function LocationCard({ lat, lon, sats, selectedCity = 'pune', currentAQI }: LocationCardProps) {
-    const { location, loading } = useLocationName(lat, lon);
-    
-    // Use selected city data if available
-    const cityData = CITIES[selectedCity];
-    const displayCity = selectedCity === 'pune' ? location : null;
-
+export default function LocationCard({ lat: _lat, lon: _lon, sats: _sats }: LocationCardProps) {
     return (
-        <div className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between" style={{ height: '165px' }}>
+        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100" style={{ height: '155px' }}>
             <div className="flex items-center gap-2 mb-3">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
                     <MapPin size={20} />
@@ -31,64 +19,15 @@ export default function LocationCard({ lat, lon, sats, selectedCity = 'pune', cu
                 </div>
             </div>
 
-            <div className="space-y-2 flex-1 overflow-hidden">
-                {selectedCity === 'pune' && loading ? (
-                    <div className="animate-pulse space-y-2">
-                        <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                    </div>
-                ) : selectedCity === 'pune' && displayCity ? (
-                    <>
-                        <div className="pb-2 border-b border-gray-50">
-                            <div className="text-lg font-bold text-gray-800 leading-tight truncate">
-                                {displayCity.address}
-                            </div>
-                            <div className="text-sm text-gray-600 mt-0.5 truncate">
-                                {displayCity.city}, {displayCity.state}
-                            </div>
-                        </div>
-                        <div className="text-xs text-gray-500 line-clamp-2">
-                            {displayCity.formatted}
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <div className="pb-2 border-b border-gray-50">
-                            <div className="text-lg font-bold text-gray-800 leading-tight">
-                                {cityData?.area || 'Unknown Location'}
-                            </div>
-                            <div className="text-sm text-gray-600 mt-0.5">
-                                {cityData?.name || 'City'}, {cityData?.state || 'State'}
-                            </div>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                            Air Quality Monitoring Station
-                        </div>
-                        {currentAQI !== undefined && (
-                            <div className="flex items-center justify-between bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-2 mt-2">
-                                <span className="text-xs font-medium text-gray-700">Current AQI</span>
-                                <span className="text-lg font-bold text-primary">{Math.round(currentAQI)}</span>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                <div className="flex justify-between items-center pt-2">
-                    <div className="flex items-center gap-2 text-gray-500 text-sm">
-                        <Satellite size={16} />
-                        <span>Satellites</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex gap-0.5">
-                            {[...Array(5)].map((_, i) => (
-                                <div
-                                    key={i}
-                                    className={`w-1 h-3 rounded-full ${i < Math.min(sats, 5) ? 'bg-green-500' : 'bg-gray-200'}`}
-                                />
-                            ))}
-                        </div>
-                        <span className="text-sm font-bold text-gray-700">{sats}</span>
-                    </div>
+            <div>
+                <div className="text-xl font-bold text-gray-900 mb-1">
+                    Solapur Road
+                </div>
+                <div className="text-sm text-gray-600 mb-2">
+                    Loni Kalbhor, Maharashtra, 412200, India
+                </div>
+                <div className="text-xs text-gray-500">
+                    Air Quality Monitoring Station
                 </div>
             </div>
         </div>

@@ -47,9 +47,11 @@
  * 4. Location Card
  * 5. Filter Life Card
  * 6. Major Air Pollutants (PM2.5, PM10, CO, NO2, NH3)
- * 7. AQI Trend Graph
- * 8. Pollutant Tabs (Current Pollutants & AQI Scale)
- * 9. Pollutant Detail Modal
+ * 7. Real-Time AQI Monitor (Stock-market style live graph)
+ * 8. AQI Trend Graph
+ * 9. Filter Maintenance Guide
+ * 10. Pollutant Tabs (Current Pollutants & AQI Scale)
+ * 11. Pollutant Detail Modal
  * 
  * ============================================
  */
@@ -58,12 +60,14 @@ import { useState } from 'react';
 import AQIHero from './AQIHero';
 import AQIScale from './AQIScale';
 import AQITrendGraph from './AQITrendGraph'; 
+import AQIRealtimeMonitor from './AQIRealtimeMonitor';
 import PollutantTabs from './PollutantTabs';
 import PollutantCard from './PollutantCard';
 import PollutantModal from './PollutantModal';
 import LocationCard from './LocationCard';
 import LiveStatus from './LiveStatus';
-import FilterLifeCard from './FilterLifeCard';
+import FilterHealthCard from './FilterLifeCard';
+import FilterMaintenanceCard from './FilterMaintenanceCard';
 import { Wind, CloudFog, Flame, Pipette, Droplets } from 'lucide-react';
 import type { SensorReading } from '../../types/sensor';
 import { CITIES } from '../../data/mockCityData';
@@ -81,11 +85,9 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
     } | null>(null);
     
     const [selectedCity, setSelectedCity] = useState<'pune' | 'delhi' | 'mumbai' | 'kolkata' | 'chennai' | 'hyderabad' | 'ahmedabad' | 'lucknow'>('pune');
-    const [selectedCityAQI, setSelectedCityAQI] = useState<number>(data.aqi);
 
-    const handleCityChange = (city: 'pune' | 'delhi' | 'mumbai' | 'kolkata' | 'chennai' | 'hyderabad' | 'ahmedabad' | 'lucknow', currentAQI: number) => {
+    const handleCityChange = (city: 'pune' | 'delhi' | 'mumbai' | 'kolkata' | 'chennai' | 'hyderabad' | 'ahmedabad' | 'lucknow') => {
         setSelectedCity(city);
-        setSelectedCityAQI(currentAQI);
     };
 
     return (
@@ -121,12 +123,10 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                             lat={selectedCity === 'pune' ? data.lat : CITIES[selectedCity].coordinates.lat} 
                             lon={selectedCity === 'pune' ? data.lon : CITIES[selectedCity].coordinates.lon} 
                             sats={data.sats}
-                            selectedCity={selectedCity}
-                            currentAQI={selectedCityAQI}
                         />
 
-                        {/* Filter Life Card - Comment out to hide */}
-                        <FilterLifeCard />
+                        {/* Filter Health Card - Comment out to hide */}
+                        <FilterHealthCard />
                     </div>
                 </div>
 
@@ -193,10 +193,22 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                 </div>
 
                 {/* ========================================
+                    REAL-TIME AQI MONITOR
+                    Comment out to hide the real-time monitoring graph
+                ======================================== */}
+                <AQIRealtimeMonitor currentAQI={data.aqi} />
+
+                {/* ========================================
                     AQI TREND GRAPH
                     Comment out to hide the 24-hour trend graph
                 ======================================== */}
                 <AQITrendGraph onCityChange={handleCityChange} />
+
+                {/* ========================================
+                    FILTER MAINTENANCE GUIDE
+                    Comment out to hide the filter maintenance card
+                ======================================== */}
+                <FilterMaintenanceCard />
 
                 {/* ========================================
                     POLLUTANT TABS (Current Pollutants & AQI Scale)
