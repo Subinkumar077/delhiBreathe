@@ -10,6 +10,12 @@ Real-time air quality monitoring system that displays environmental data from Fi
 - **Interactive Map**: View sensor locations and clustered readings on a map.
 - **City Comparison**: Compare AQI trends across multiple cities with interactive charts.
 - **Rankings**: View cities ranked by pollution levels.
+- **AI Chatbot Assistant** 🤖: Voice and text-enabled chatbot with real-time data
+  - Shows current AQI and pollutant levels from live sensors
+  - 25+ FAQs about air quality, pollutants, and health
+  - Voice input capability (Chrome/Edge)
+  - Instant answers with health recommendations
+  - Preventative measures and reduction strategies
 - **Responsive Design**: Fully optimized for Desktop and Mobile experiences.
 - **AQI Visuals**: Intuitive color-coded scales and health advisories.
 
@@ -70,6 +76,12 @@ Real-time air quality monitoring system that displays environmental data from Fi
 ```
 src/
 ├── components/     # Reusable UI components
+│   ├── chatbot/    # AI Chatbot components
+│   ├── home/       # Home page components
+│   ├── layout/     # Layout components
+│   ├── map/        # Map components
+│   └── shared/     # Shared components
+├── data/           # Static data and knowledge base
 ├── hooks/          # Custom React hooks (Data fetching)
 ├── pages/          # Route components
 ├── services/       # External service config (Firebase)
@@ -77,6 +89,24 @@ src/
 ├── types/          # TypeScript interfaces
 └── utils/          # Helper functions (Formatters, AQI logic)
 ```
+
+## Chatbot Features
+
+The AI-powered chatbot assistant helps users understand air quality:
+
+- **Real-Time Data**: Shows current AQI and pollutant values from live sensors
+- **Voice Input**: Speak your questions naturally (Chrome/Edge)
+- **Smart Responses**: Trained on comprehensive AQI knowledge
+- **Quick Replies**: One-click access to common questions
+- **Topics Covered**:
+  - Current AQI and pollutant levels (real-time)
+  - AQI basics and categories
+  - All pollutants (PM2.5, PM10, CO, NO2, NH3)
+  - Health effects and vulnerable groups
+  - Reduction methods and protective measures
+  - Air purifiers, masks, and safety guidelines
+
+See [CHATBOT_FEATURES.md](CHATBOT_FEATURES.md) for detailed documentation and [CHATBOT_USAGE_GUIDE.md](CHATBOT_USAGE_GUIDE.md) for usage instructions.
 
 ## Contributing
 

@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import AirPollutionMap from './pages/AirPollutionMap';
 import Comparison from './pages/Comparison';
 import Ranking from './pages/Ranking';
+import Chatbot from './components/chatbot/Chatbot';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/ranking" element={<Ranking />} />
         </Routes>
       </Layout>
+      <Chatbot />
     </BrowserRouter>
   );
 }
