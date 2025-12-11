@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getPollutantStatus } from '../../constants/airQualityStandards';
 import type { SensorReading } from '../../types/sensor';
 
@@ -18,6 +19,7 @@ interface PollutantDetail {
 }
 
 export default function PollutantTabs({ data }: PollutantTabsProps) {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'pollutants' | 'scale'>('pollutants');
     const [expandedPollutant, setExpandedPollutant] = useState<string | null>(null);
 
@@ -151,7 +153,8 @@ export default function PollutantTabs({ data }: PollutantTabsProps) {
                             return (
                                 <div
                                     key={pollutant.id}
-                                    className="border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-all"
+                                    className="border border-gray-200 rounded-xl overflow-hidden hover:border-primary hover:shadow-md transition-all cursor-pointer"
+                                    onClick={() => navigate(`/pollutant/${pollutant.id}`)}
                                 >
                                     <div className="p-4 flex items-start justify-between gap-4">
                                         {/* Left: Pollutant Name and Status */}
@@ -175,7 +178,16 @@ export default function PollutantTabs({ data }: PollutantTabsProps) {
                                         <div className="flex-1">
                                             <div className="flex items-start gap-2 mb-2">
                                                 <span className="font-bold text-gray-900">{pollutant.fullName}</span>
-                                                <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/pollutant/${pollutant.id}`);
+                                                    }}
+                                                    className="text-gray-400 hover:text-primary transition-colors"
+                                                    title="View detailed analysis"
+                                                >
+                                                    <ExternalLink className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                                </button>
                                             </div>
                                             <p className="text-sm text-gray-700 leading-relaxed">
                                                 {pollutant.description}

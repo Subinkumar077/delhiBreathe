@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { getPollutantStatus, POLLUTANT_INFO } from '../../constants/airQualityStandards';
-import { Info } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface PollutantCardProps {
     label: string;
@@ -9,10 +10,12 @@ interface PollutantCardProps {
     icon: LucideIcon;
     colorClass?: string; // Optional now, kept for backward compatibility
     subtext?: string;
-    onClick?: () => void;
+    pollutantId: string; // Add pollutantId for routing
 }
 
-export default function PollutantCard({ label, value, unit, icon: Icon, onClick }: PollutantCardProps) {
+export default function PollutantCard({ label, value, unit, icon: Icon, pollutantId }: PollutantCardProps) {
+    const navigate = useNavigate();
+
     // Map label to pollutant type for standards lookup
     const getPollutantType = (label: string): string => {
         const mapping: { [key: string]: string } = {
@@ -21,7 +24,7 @@ export default function PollutantCard({ label, value, unit, icon: Icon, onClick 
             'CO': 'CO',
             'NO2': 'NO2',
             'SO2': 'SO2',
-            'NH3': 'NO2', // Using NO2 standards as fallback for NH3
+            'NH3': 'NH3',
             'VOCs': 'VOCs'
         };
         return mapping[label] || label;
@@ -31,16 +34,20 @@ export default function PollutantCard({ label, value, unit, icon: Icon, onClick 
     const status = getPollutantStatus(pollutantType, value);
     const info = POLLUTANT_INFO[pollutantType];
 
+    const handleClick = () => {
+        navigate(`/pollutant/${pollutantId}`);
+    };
+
     return (
         <div 
             className="bg-white rounded-2xl p-5 shadow-sm border-2 hover:shadow-lg transition-all hover:-translate-y-1 h-full flex flex-col justify-between cursor-pointer group relative"
             style={{ borderColor: status.color }}
             title={info?.source || ''}
-            onClick={onClick}
+            onClick={handleClick}
         >
             {/* Click indicator */}
             <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Info className="w-4 h-4 text-gray-400" />
+                <ExternalLink className="w-4 h-4 text-gray-400" />
             </div>
             <div className="flex justify-between items-start mb-4">
                 <div 

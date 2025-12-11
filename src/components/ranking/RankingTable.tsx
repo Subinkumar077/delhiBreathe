@@ -1,4 +1,4 @@
-import RankBadge from './RankBadge';
+
 import { getAqiColor } from '../../utils/aqiColors';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -12,7 +12,7 @@ export default function RankingTable({ data }: RankingTableProps) {
             <table className="w-full text-left border-collapse">
                 <thead>
                     <tr className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                        <th className="p-4 w-16">Rank</th>
+                        <th className="p-4 w-16"></th>
                         <th className="p-4">City</th>
                         <th className="p-4">AQI</th>
                         <th className="p-4">Category</th>
@@ -23,7 +23,7 @@ export default function RankingTable({ data }: RankingTableProps) {
                     {data.map((city, index) => (
                         <tr key={city.name} className="hover:bg-gray-50/50 transition-colors">
                             <td className="p-4">
-                                <RankBadge rank={index + 1} />
+                                
                             </td>
                             <td className="p-4 font-medium text-gray-900">{city.name}</td>
                             <td className="p-4">

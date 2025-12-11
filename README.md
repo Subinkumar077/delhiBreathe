@@ -106,7 +106,7 @@ The AI-powered chatbot assistant helps users understand air quality:
   - Reduction methods and protective measures
   - Air purifiers, masks, and safety guidelines
 
-See [CHATBOT_FEATURES.md](CHATBOT_FEATURES.md) for detailed documentation and [CHATBOT_USAGE_GUIDE.md](CHATBOT_USAGE_GUIDE.md) for usage instructions.
+See [CHATBOT_README.md](CHATBOT_README.md) for complete documentation.
 
 ## Contributing
 

@@ -7,8 +7,8 @@ export default function Navbar() {
     const navItems = [
         { label: 'Home', path: '/' },
         { label: 'Air Pollution Map', path: '/map' },
-        // { label: 'Comparison', path: '/comparison' },
-        // { label: 'Ranking', path: '/ranking' },
+        { label: 'Comparison', path: '/comparison' },
+        { label: 'Ranking', path: '/ranking' },
     ];
 
     return (

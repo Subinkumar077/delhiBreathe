@@ -77,7 +77,7 @@ export default function AQIScale({ currentAqi }: AQIScaleProps) {
                 {/* Indicator */}
                 <div
                     className="absolute top-5 -translate-y-1/2 w-5 h-5 bg-white border-[3px] border-gray-900 rounded-full shadow-lg z-10 transition-all duration-500 ease-out transform -translate-x-1/2"
-                    style={{ left: `${percentage}%`, top: '3rem' }}
+                    style={{ left: `${percentage}%`, top: '3.5rem' }}
                 />
             </div>
         </div>

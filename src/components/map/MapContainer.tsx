@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, ZoomControl } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+// import 'leaflet/dist/leaflet.css';
 import { useMapReadings } from '../../hooks/useMapReadings';
 import MapMarker from './MapMarker';
 import SearchBar from './SearchBar';

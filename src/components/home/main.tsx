@@ -64,10 +64,10 @@ import AQIRealtimeMonitor from './AQIRealtimeMonitor';
 import AQIPredictionCard from './AQIPredictionCard';
 import PollutantTabs from './PollutantTabs';
 import PollutantCard from './PollutantCard';
-import PollutantModal from './PollutantModal';
 import LocationCard from './LocationCard';
 import LiveStatus from './LiveStatus';
 import FilterMaintenanceCard from './FilterMaintenanceCard';
+import CigaretteEquivalent from './CigaretteEquivalent';
 import { Wind, CloudFog, Flame, Pipette, Droplets } from 'lucide-react';
 import type { SensorReading } from '../../types/sensor';
 import { CITIES } from '../../data/mockCityData';
@@ -78,12 +78,6 @@ interface HomeMainProps {
 }
 
 export default function HomeMain({ data, connected }: HomeMainProps) {
-    const [selectedPollutant, setSelectedPollutant] = useState<{
-        id: string;
-        value: number;
-        unit: string;
-    } | null>(null);
-    
     const [selectedCity, setSelectedCity] = useState<'pune' | 'delhi' | 'mumbai' | 'kolkata' | 'chennai' | 'hyderabad' | 'ahmedabad' | 'lucknow'>('pune');
 
     const handleCityChange = (city: 'pune' | 'delhi' | 'mumbai' | 'kolkata' | 'chennai' | 'hyderabad' | 'ahmedabad' | 'lucknow') => {
@@ -143,7 +137,7 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                             unit="µg/m³"
                             icon={Wind}
                             colorClass="bg-purple-500"
-                            onClick={() => setSelectedPollutant({ id: 'PM2_5', value: data.pm25, unit: 'µg/m³' })}
+                            pollutantId="PM2_5"
                         />
 
                         {/* PM10 Card - Comment out to hide */}
@@ -153,7 +147,7 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                             unit="µg/m³"
                             icon={CloudFog}
                             colorClass="bg-blue-500"
-                            onClick={() => setSelectedPollutant({ id: 'PM10', value: data.pm10, unit: 'µg/m³' })}
+                            pollutantId="PM10"
                         />
 
                         {/* CO Card - Comment out to hide */}
@@ -163,7 +157,7 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                             unit="mg/m³"
                             icon={Flame}
                             colorClass="bg-red-500"
-                            onClick={() => setSelectedPollutant({ id: 'CO', value: data.gas1_ppm * 1.145, unit: 'mg/m³' })}
+                            pollutantId="CO"
                         />
 
                         {/* NO2 Card - Comment out to hide */}
@@ -173,7 +167,7 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                             unit="ppm"
                             icon={Pipette}
                             colorClass="bg-orange-500"
-                            onClick={() => setSelectedPollutant({ id: 'NO2', value: data.gas2_ppm, unit: 'ppm' })}
+                            pollutantId="NO2"
                         />
 
                         {/* NH3 Card - Comment out to hide */}
@@ -183,7 +177,7 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                             unit="ppm"
                             icon={Droplets}
                             colorClass="bg-teal-500"
-                            onClick={() => setSelectedPollutant({ id: 'NH3', value: data.gas3_ppm, unit: 'ppm' })}
+                            pollutantId="NH3"
                         />
                     </div>
                 </div>
@@ -218,20 +212,14 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                     Comment out to hide the tabbed section
                 ======================================== */}
                 <PollutantTabs data={data} />
-            </div>
 
-            {/* ========================================
-                POLLUTANT DETAIL MODAL
-                Comment out to disable modal functionality
-            ======================================== */}
-            {selectedPollutant && (
-                <PollutantModal
-                    pollutantId={selectedPollutant.id}
-                    currentValue={selectedPollutant.value}
-                    unit={selectedPollutant.unit}
-                    onClose={() => setSelectedPollutant(null)}
-                />
-            )}
+                {/* ========================================
+                    CIGARETTE EQUIVALENT
+                    Shows how many cigarettes worth of pollution exposure
+                    Comment out to hide this section
+                ======================================== */}
+                <CigaretteEquivalent aqi={data.aqi} />
+            </div>
         </>
     );
 }

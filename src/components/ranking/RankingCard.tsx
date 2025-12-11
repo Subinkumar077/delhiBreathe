@@ -1,4 +1,3 @@
-import RankBadge from './RankBadge';
 import { getAqiColor } from '../../utils/aqiColors';
 
 interface RankingCardProps {
@@ -10,7 +9,9 @@ export default function RankingCard({ data, rank }: RankingCardProps) {
     return (
         <div className="flex items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3">
             <div className="mr-4">
-                <RankBadge rank={rank} />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md">
+                    {rank}
+                </div>
             </div>
             <div className="flex-1">
                 <h4 className="font-bold text-gray-900">{data.name}</h4>
