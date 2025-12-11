@@ -9,8 +9,11 @@
 
 const { setGlobalOptions } = require("firebase-functions");
 const { onValueCreated } = require("firebase-functions/v2/database");
+const { onRequest } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
+const { spawn } = require("child_process");
+const path = require("path");
 
 admin.initializeApp();
 
@@ -94,5 +97,71 @@ exports.calculateFilterWear = onValueCreated("/readings/{pushId}", async (event)
 
     } catch (error) {
         logger.error("Error calculating filter wear:", error);
+    }
+});
+
+// AQI Prediction endpoint
+exports.predictAQI = onRequest({ cors: true }, async (req, res) => {
+    try {
+        logger.info("AQI Prediction request received");
+
+        // Use mock predictions (replace with Python ML when ready)
+        const { getMockPredictions } = require('./mockPredictions');
+        const predictions = await getMockPredictions(admin.database());
+        
+        res.json(predictions);
+    } catch (error) {
+        logger.error("Error in predictAQI:", error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+        });
+    }
+});
+
+// Train model endpoint (admin only)
+exports.trainModel = onRequest({ cors: true }, async (req, res) => {
+    try {
+        logger.info("Model training request received");
+
+        const pythonProcess = spawn("python3", [
+            path.join(__dirname, "ml", "train_model.py"),
+        ]);
+
+        let dataString = "";
+        let errorString = "";
+
+        pythonProcess.stdout.on("data", (data) => {
+            dataString += data.toString();
+            logger.info("Training output:", data.toString());
+        });
+
+        pythonProcess.stderr.on("data", (data) => {
+            errorString += data.toString();
+            logger.error("Training stderr:", data.toString());
+        });
+
+        pythonProcess.on("close", (code) => {
+            if (code !== 0) {
+                res.status(500).json({
+                    success: false,
+                    error: "Training failed",
+                    details: errorString,
+                });
+                return;
+            }
+
+            res.json({
+                success: true,
+                message: "Model trained successfully",
+                output: dataString,
+            });
+        });
+    } catch (error) {
+        logger.error("Error in trainModel:", error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+        });
     }
 });

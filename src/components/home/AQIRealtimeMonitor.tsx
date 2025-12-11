@@ -15,11 +15,11 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
         const now = Date.now();
         const initialData: DataPoint[] = [];
         
-        // Generate 60 data points (last 60 seconds)
-        for (let i = 60; i >= 0; i--) {
+        // Generate 30 data points (last 30 minutes, one point per minute)
+        for (let i = 30; i >= 0; i--) {
             initialData.push({
-                timestamp: now - (i * 1000),
-                aqi: currentAQI + (Math.random() - 0.5) * 10
+                timestamp: now - (i * 60000), // 60000ms = 1 minute
+                aqi: currentAQI + (Math.random() - 0.5) * 15
             });
         }
         
@@ -38,8 +38,8 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
         setDataPoints(prev => {
             const newPoints = [...prev, { timestamp: now, aqi: currentAQI }];
             
-            // Keep only last 60 seconds of data
-            const cutoffTime = now - 60000;
+            // Keep only last 30 minutes of data
+            const cutoffTime = now - (30 * 60000); // 30 minutes
             return newPoints.filter(point => point.timestamp > cutoffTime);
         });
 
@@ -52,6 +52,14 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
         setPreviousAQI(currentAQI);
     }, [currentAQI, previousAQI]);
 
+    // Format time for x-axis labels
+    const formatTime = (timestamp: number): string => {
+        const date = new Date(timestamp);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    };
+
     // Draw the real-time graph
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -63,47 +71,87 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
         const draw = () => {
             const width = canvas.width;
             const height = canvas.height;
-            const padding = 40;
-            const graphWidth = width - padding * 2;
-            const graphHeight = height - padding * 2;
+            const paddingLeft = 50;
+            const paddingRight = 20;
+            const paddingTop = 30;
+            const paddingBottom = 50;
+            const graphWidth = width - paddingLeft - paddingRight;
+            const graphHeight = height - paddingTop - paddingBottom;
 
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
+            // Clear canvas with subtle background
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
 
             // Get min and max AQI for scaling
             const aqiValues = dataPoints.map(d => d.aqi);
-            const minAQI = Math.min(...aqiValues) - 10;
-            const maxAQI = Math.max(...aqiValues) + 10;
+            const minAQI = Math.floor(Math.min(...aqiValues) / 10) * 10 - 10;
+            const maxAQI = Math.ceil(Math.max(...aqiValues) / 10) * 10 + 10;
             const range = maxAQI - minAQI || 1;
 
-            // Draw grid lines
-            ctx.strokeStyle = '#E5E7EB';
+            // Draw horizontal grid lines
+            ctx.strokeStyle = '#e5e7eb';
             ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
             
             for (let i = 0; i <= 5; i++) {
-                const y = padding + (graphHeight / 5) * i;
+                const y = paddingTop + (graphHeight / 5) * i;
                 ctx.beginPath();
-                ctx.moveTo(padding, y);
-                ctx.lineTo(width - padding, y);
+                ctx.moveTo(paddingLeft, y);
+                ctx.lineTo(width - paddingRight, y);
                 ctx.stroke();
 
                 // Draw Y-axis labels
                 const aqiValue = Math.round(maxAQI - (range / 5) * i);
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '11px sans-serif';
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '12px Inter, sans-serif';
                 ctx.textAlign = 'right';
-                ctx.fillText(aqiValue.toString(), padding - 8, y + 4);
+                ctx.textBaseline = 'middle';
+                ctx.fillText(aqiValue.toString(), paddingLeft - 10, y);
             }
 
-            // Draw gradient fill under the line
-            const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
-            gradient.addColorStop(0, getAQIColor(currentAQI, 0.3));
-            gradient.addColorStop(1, getAQIColor(currentAQI, 0.05));
+            ctx.setLineDash([]);
+
+            // Draw X-axis time labels (show 6 time points across 30 minutes)
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            
+            const timeLabels = 6;
+            for (let i = 0; i < timeLabels; i++) {
+                const pointIndex = Math.floor((i / (timeLabels - 1)) * (dataPoints.length - 1));
+                const point = dataPoints[pointIndex];
+                const x = paddingLeft + (pointIndex / (dataPoints.length - 1)) * graphWidth;
+                const y = height - paddingBottom + 10;
+                
+                ctx.fillText(formatTime(point.timestamp), x, y);
+            }
+
+            // Draw X-axis label
+            ctx.fillStyle = '#374151';
+            ctx.font = 'bold 12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Time (Last 30 Minutes)', width / 2, height - 10);
+
+            // Draw Y-axis label
+            ctx.save();
+            ctx.translate(15, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle = '#374151';
+            ctx.font = 'bold 12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('AQI Value', 0, 0);
+            ctx.restore();
+
+            // Draw smooth gradient fill under the line
+            const gradient = ctx.createLinearGradient(0, paddingTop, 0, height - paddingBottom);
+            gradient.addColorStop(0, getAQIColor(currentAQI, 0.15));
+            gradient.addColorStop(1, getAQIColor(currentAQI, 0.02));
 
             ctx.beginPath();
             dataPoints.forEach((point, index) => {
-                const x = padding + (index / (dataPoints.length - 1)) * graphWidth;
-                const y = height - padding - ((point.aqi - minAQI) / range) * graphHeight;
+                const x = paddingLeft + (index / (dataPoints.length - 1)) * graphWidth;
+                const y = height - paddingBottom - ((point.aqi - minAQI) / range) * graphHeight;
                 
                 if (index === 0) {
                     ctx.moveTo(x, y);
@@ -112,22 +160,24 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
                 }
             });
             
-            ctx.lineTo(width - padding, height - padding);
-            ctx.lineTo(padding, height - padding);
+            ctx.lineTo(width - paddingRight, height - paddingBottom);
+            ctx.lineTo(paddingLeft, height - paddingBottom);
             ctx.closePath();
             ctx.fillStyle = gradient;
             ctx.fill();
 
-            // Draw the main line
+            // Draw the main smooth line with environmental theme color
             ctx.beginPath();
-            ctx.strokeStyle = getAQIColor(currentAQI, 1);
-            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = getAQIColor(currentAQI, 0.9);
+            ctx.lineWidth = 3;
             ctx.lineJoin = 'round';
             ctx.lineCap = 'round';
+            ctx.shadowColor = getAQIColor(currentAQI, 0.3);
+            ctx.shadowBlur = 8;
 
             dataPoints.forEach((point, index) => {
-                const x = padding + (index / (dataPoints.length - 1)) * graphWidth;
-                const y = height - padding - ((point.aqi - minAQI) / range) * graphHeight;
+                const x = paddingLeft + (index / (dataPoints.length - 1)) * graphWidth;
+                const y = height - paddingBottom - ((point.aqi - minAQI) / range) * graphHeight;
                 
                 if (index === 0) {
                     ctx.moveTo(x, y);
@@ -136,18 +186,42 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
                 }
             });
             ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Draw data points as small circles
+            dataPoints.forEach((point, index) => {
+                const x = paddingLeft + (index / (dataPoints.length - 1)) * graphWidth;
+                const y = height - paddingBottom - ((point.aqi - minAQI) / range) * graphHeight;
+                
+                // Only show every 5th point to avoid clutter
+                if (index % 5 === 0 || index === dataPoints.length - 1) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                    ctx.strokeStyle = getAQIColor(currentAQI, 0.9);
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
 
             // Draw current value indicator (pulsing dot)
             if (dataPoints.length > 0) {
                 const lastPoint = dataPoints[dataPoints.length - 1];
-                const x = width - padding;
-                const y = height - padding - ((lastPoint.aqi - minAQI) / range) * graphHeight;
+                const x = width - paddingRight;
+                const y = height - paddingBottom - ((lastPoint.aqi - minAQI) / range) * graphHeight;
 
-                // Outer glow
-                const pulseRadius = 8 + Math.sin(Date.now() / 200) * 2;
+                // Outer glow (pulsing)
+                const pulseRadius = 10 + Math.sin(Date.now() / 300) * 3;
                 ctx.beginPath();
                 ctx.arc(x, y, pulseRadius, 0, Math.PI * 2);
-                ctx.fillStyle = getAQIColor(currentAQI, 0.3);
+                ctx.fillStyle = getAQIColor(currentAQI, 0.2);
+                ctx.fill();
+
+                // Middle ring
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = getAQIColor(currentAQI, 0.5);
                 ctx.fill();
 
                 // Inner dot
@@ -155,7 +229,7 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
                 ctx.arc(x, y, 4, 0, Math.PI * 2);
                 ctx.fillStyle = getAQIColor(currentAQI, 1);
                 ctx.fill();
-                ctx.strokeStyle = '#FFFFFF';
+                ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 2;
                 ctx.stroke();
             }
@@ -203,9 +277,9 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5">
+            <div className="bg-gradient-to-r from-primary to-secondary p-5">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -213,15 +287,15 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-white">Real-Time AQI Monitor</h2>
-                            <p className="text-sm text-blue-100">Live air quality tracking</p>
+                            <p className="text-sm text-white/90">Live air quality tracking - Last 30 minutes</p>
                         </div>
                     </div>
                     
                     {/* Live Indicator */}
                     <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
                         <div className="relative">
-                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                            <div className="absolute inset-0 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                            <div className="absolute inset-0 w-2 h-2 bg-green-400 rounded-full animate-ping" />
                         </div>
                         <span className="text-xs font-semibold text-white">LIVE</span>
                     </div>
@@ -273,21 +347,14 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
 
             {/* Graph */}
             <div className="p-5">
-                <div className="bg-gradient-to-br from-gray-50 to-white rounded-lg p-4 border border-gray-200">
+                <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                     <canvas
                         ref={canvasRef}
-                        width={800}
-                        height={300}
+                        width={900}
+                        height={350}
                         className="w-full h-auto"
-                        style={{ maxHeight: '300px' }}
+                        style={{ maxHeight: '350px' }}
                     />
-                    
-                    {/* Time indicator */}
-                    <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
-                        <span>60s ago</span>
-                        <span className="font-medium text-gray-700">Time</span>
-                        <span className="font-semibold text-gray-900">Now</span>
-                    </div>
                 </div>
             </div>
 
@@ -306,9 +373,9 @@ export default function AQIRealtimeMonitor({ currentAQI }: AQIRealtimeMonitorPro
 
             {/* Footer Info */}
             <div className="px-5 pb-5">
-                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                    <p className="text-xs text-blue-900 font-medium">
-                        📊 Monitoring updates every second • Data retention: 60 seconds
+                <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                    <p className="text-xs text-green-900 font-medium">
+                        📊 Real-time monitoring • Updates every minute • Displaying last 30 minutes of data
                     </p>
                 </div>
             </div>

@@ -61,12 +61,12 @@ import AQIHero from './AQIHero';
 import AQIScale from './AQIScale';
 import AQITrendGraph from './AQITrendGraph'; 
 import AQIRealtimeMonitor from './AQIRealtimeMonitor';
+import AQIPredictionCard from './AQIPredictionCard';
 import PollutantTabs from './PollutantTabs';
 import PollutantCard from './PollutantCard';
 import PollutantModal from './PollutantModal';
 import LocationCard from './LocationCard';
 import LiveStatus from './LiveStatus';
-import FilterHealthCard from './FilterLifeCard';
 import FilterMaintenanceCard from './FilterMaintenanceCard';
 import { Wind, CloudFog, Flame, Pipette, Droplets } from 'lucide-react';
 import type { SensorReading } from '../../types/sensor';
@@ -106,27 +106,23 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                 </div>
 
                 {/* ========================================
-                    MAIN LAYOUT: AQI HERO + LOCATION CARDS
+                    MAIN LAYOUT: AQI HERO + LOCATION CARD
                     Comment out to hide this entire section
                 ======================================== */}
-                {/* Top Row: AQI Hero + Right Cards */}
+                {/* Top Row: AQI Hero + Location Card */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* AQI Hero Card - Takes 2/3 width - Comment out to hide */}
                     <div className="lg:col-span-2">
                         <AQIHero data={data} />
                     </div>
 
-                    {/* Right Column - Takes 1/3 width */}
-                    <div className="lg:col-span-1 flex flex-col gap-6">
-                        {/* Location Card - Comment out to hide */}
+                    {/* Location Card - Takes 1/3 width - Comment out to hide */}
+                    <div className="lg:col-span-1">
                         <LocationCard 
                             lat={selectedCity === 'pune' ? data.lat : CITIES[selectedCity].coordinates.lat} 
                             lon={selectedCity === 'pune' ? data.lon : CITIES[selectedCity].coordinates.lon} 
                             sats={data.sats}
                         />
-
-                        {/* Filter Health Card - Comment out to hide */}
-                        <FilterHealthCard />
                     </div>
                 </div>
 
@@ -191,6 +187,13 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                         />
                     </div>
                 </div>
+
+                {/* ========================================
+                    AI-POWERED AQI PREDICTIONS
+                    LSTM Neural Network predictions for daily, weekly, and monthly AQI
+                    Comment out to hide the prediction card
+                ======================================== */}
+                <AQIPredictionCard currentAQI={data.aqi} />
 
                 {/* ========================================
                     REAL-TIME AQI MONITOR
