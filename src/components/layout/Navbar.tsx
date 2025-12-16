@@ -23,7 +23,7 @@ export default function Navbar() {
 />
 
                         <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                            Delhi Breathe
+                            Eco Breathe
                         </span>
                     </div>
                     <div className="hidden sm:block">
