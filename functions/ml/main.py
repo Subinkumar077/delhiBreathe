@@ -1,40 +1,41 @@
-"""
-Main entry point for ML prediction service on Render
-"""
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from predict_service import AQIPredictionService
+import uvicorn
+import firebase_admin
+from firebase_admin import credentials
 import os
-from flask import Flask, request, jsonify
-from predict_service import predict_aqi
 
-app = Flask(__name__)
+# --- FIX: Initialize Firebase ---
+if not firebase_admin._apps:
+    # Check if the key exists to avoid a crash at startup
+    if os.path.exists('serviceAccountKey.json'):
+        try:
+            cred = credentials.Certificate('serviceAccountKey.json')
+            firebase_admin.initialize_app(cred, {
+                'databaseURL': 'https://delhibreathe-default-rtdb.firebaseio.com'
+            })
+            print("✅ Firebase initialized successfully")
+        except Exception as e:
+            print(f"❌ Error initializing Firebase: {e}")
+    else:
+        print("⚠️  WARNING: 'serviceAccountKey.json' not found. Database connections will fail.")
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({'status': 'healthy', 'service': 'ml-prediction'}), 200
+app = FastAPI()
 
-@app.route('/predict', methods=['POST'])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize the service (this loads the created model)
+service = AQIPredictionService()
+
+@app.get("/predict")
 def predict():
-    try:
-        data = request.get_json()
-        
-        # Extract required parameters
-        location = data.get('location')
-        historical_data = data.get('historical_data')
-        
-        if not location or not historical_data:
-            return jsonify({'error': 'Missing required parameters'}), 400
-        
-        # Make prediction
-        prediction = predict_aqi(historical_data)
-        
-        return jsonify({
-            'location': location,
-            'prediction': prediction,
-            'status': 'success'
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e), 'status': 'error'}), 500
+    return service.predict_all()
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
