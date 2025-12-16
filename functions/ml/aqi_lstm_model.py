@@ -73,7 +73,7 @@ class AQILSTMPredictor:
         
         return history
     
-    def predict_future(self, recent_data, steps=1):
+    def predict_future(self, recent_data, steps=1): 
         """Predict future AQI values"""
         if self.model is None:
             raise ValueError("Model not trained or loaded")
