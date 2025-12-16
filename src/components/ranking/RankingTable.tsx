@@ -20,7 +20,7 @@ export default function RankingTable({ data }: RankingTableProps) {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                    {data.map((city, index) => (
+                    {data.map((city) => (
                         <tr key={city.name} className="hover:bg-gray-50/50 transition-colors">
                             <td className="p-4">
                                 

@@ -1,4 +1,4 @@
-import { MapPin, Navigation, Satellite, Radio } from 'lucide-react';
+import { MapPin, Radio } from 'lucide-react';
 
 interface LocationCardProps {
     lat?: number;
@@ -6,7 +6,7 @@ interface LocationCardProps {
     sats?: number;
 }
 
-export default function LocationCard({ lat, lon, sats }: LocationCardProps) {
+export default function LocationCard({}: LocationCardProps) {
     return (
         <div 
             className="relative overflow-hidden rounded-3xl p-6 shadow-sm border border-gray-100 bg-gradient-to-br from-blue-50 via-white to-green-50 flex flex-col justify-between"

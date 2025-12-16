@@ -38,9 +38,7 @@ interface AQIPredictionCardProps {
   currentAQI: number;
 }
 
-export default function AQIPredictionCard({
-  currentAQI,
-}: AQIPredictionCardProps) {
+export default function AQIPredictionCard({}: AQIPredictionCardProps) {
   const [predictions, setPredictions] = useState<Predictions | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +46,10 @@ export default function AQIPredictionCard({
     "daily"
   );
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [backendStatus, setBackendStatus] = useState<string>("Initializing...");
 
   const fetchPredictions = async () => {
     setLoading(true);
     setError(null);
-    setBackendStatus("Connecting to Python Server...");
 
     try {
       // --- CHANGE START: Call your local Python Backend ---
@@ -71,7 +67,6 @@ export default function AQIPredictionCard({
         const preds = data.predictions || data;
         setPredictions(preds);
         setLastUpdated(new Date());
-        setBackendStatus("✅ Connected to LSTM Model");
       } else {
         throw new Error("Invalid data format from backend");
       }
@@ -81,7 +76,6 @@ export default function AQIPredictionCard({
         err instanceof Error ? err.message : "Is the Python server running?"
       );
       console.error("Prediction error:", err);
-      setBackendStatus("❌ Connection Failed");
     } finally {
       setLoading(false);
     }
