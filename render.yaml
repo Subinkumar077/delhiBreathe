@@ -1,0 +1,43 @@
+services:
+  # Frontend - Static Site
+  - type: web
+    name: delhibreathe-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_FIREBASE_API_KEY
+        sync: false
+      - key: VITE_FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: VITE_FIREBASE_DATABASE_URL
+        sync: false
+      - key: VITE_FIREBASE_PROJECT_ID
+        sync: false
+      - key: VITE_FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: VITE_FIREBASE_MESSAGING_SENDER_ID
+        sync: false
+      - key: VITE_FIREBASE_APP_ID
+        sync: false
+      - key: VITE_FIREBASE_MEASUREMENT_ID
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # Python ML Service
+  - type: web
+    name: delhibreathe-ml-service
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install -r functions/ml/requirements.txt
+    startCommand: cd functions/ml && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: FIREBASE_DATABASE_URL
+        value: https://delhibreathe-default-rtdb.firebaseio.com
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+    healthCheckPath: /predict
