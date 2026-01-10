@@ -176,7 +176,7 @@ export default function AQITrendGraph({ onCityChange }: AQITrendGraphProps) {
     const timeLabels = getTimeLabels();
 
     return (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
+        <div>
             {/* Header with Controls */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">

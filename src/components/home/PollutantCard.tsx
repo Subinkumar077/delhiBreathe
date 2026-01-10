@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { getPollutantStatus, POLLUTANT_INFO } from '../../constants/airQualityStandards';
+import { getPollutantStatus } from '../../constants/airQualityStandards';
 import { ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,18 +32,18 @@ export default function PollutantCard({ label, value, unit, icon: Icon, pollutan
 
     const pollutantType = getPollutantType(label);
     const status = getPollutantStatus(pollutantType, value);
-    const info = POLLUTANT_INFO[pollutantType];
 
     const handleClick = () => {
         navigate(`/pollutant/${pollutantId}`);
     };
 
     return (
-        <div 
+        <button
+            onClick={handleClick}
             className="bg-white rounded-2xl p-5 shadow-sm border-2 hover:shadow-lg transition-all hover:-translate-y-1 h-full flex flex-col justify-between cursor-pointer group relative"
             style={{ borderColor: status.color }}
-            title={info?.source || ''}
-            onClick={handleClick}
+            title={`${label}: ${value.toFixed(2)} ${unit}. ${status.message}`}
+            aria-label={`${label} level: ${value.toFixed(2)} ${unit}. Status: ${status.status}. ${status.message}. Click for more details.`}
         >
             {/* Click indicator */}
             <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -73,10 +73,10 @@ export default function PollutantCard({ label, value, unit, icon: Icon, pollutan
                 <p className="text-xs text-gray-500 mt-2 leading-relaxed">
                     {status.message}
                 </p>
-                <p className="text-xs text-primary mt-2 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-xs text-primary mt-2 font-medium opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true">
                     Click for details →
                 </p>
             </div>
-        </div>
+        </button>
     );
 }

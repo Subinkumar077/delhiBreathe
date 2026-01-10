@@ -165,3 +165,11 @@ exports.trainModel = onRequest({ cors: true }, async (req, res) => {
         });
     }
 });
+
+// AQI Notification Functions
+exports.sendAQINotifications = require('./sendAQINotifications').sendAQINotifications;
+exports.triggerAQINotifications = require('./sendAQINotifications').triggerAQINotifications;
+
+// Stripe Checkout Functions
+exports.createCheckoutSession = require('./stripeCheckout').createCheckoutSession;
+exports.stripeWebhook = require('./stripeCheckout').stripeWebhook;

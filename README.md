@@ -1,4 +1,4 @@
-# Delhi Breathe 🌍
+# Eco Breathe 🌍
 
 Real-time air quality monitoring system that displays environmental data from Firebase Realtime Database. Tracks PM2.5, PM10, CO, NO2, and NH3 levels with geolocation data.
 
@@ -40,7 +40,7 @@ Real-time air quality monitoring system that displays environmental data from Fi
 1. Clone the repository
    ```bash
    git clone <repository-url>
-   cd delhibreathe-vite
+   cd ecobreathe-vite
    ```
 
 2. Install dependencies

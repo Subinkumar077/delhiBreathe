@@ -68,6 +68,7 @@ import LocationCard from './LocationCard';
 import LiveStatus from './LiveStatus';
 import FilterMaintenanceCard from './FilterMaintenanceCard';
 import CigaretteEquivalent from './CigaretteEquivalent';
+import DataAttribution from '../shared/DataAttribution';
 import { Wind, CloudFog, Flame, Pipette, Droplets } from 'lucide-react';
 import type { SensorReading } from '../../types/sensor';
 import { CITIES } from '../../data/mockCityData';
@@ -219,6 +220,13 @@ export default function HomeMain({ data, connected }: HomeMainProps) {
                     Comment out to hide this section
                 ======================================== */}
                 <CigaretteEquivalent aqi={data.aqi} />
+
+                {/* ========================================
+                    DATA ATTRIBUTION
+                    Transparency about data sources and methodology
+                    Comment out to hide this section
+                ======================================== */}
+                <DataAttribution />
             </div>
         </>
     );

@@ -18,7 +18,7 @@ export default function Navbar() {
                     <div className="flex-shrink-0 flex items-center gap-2">
                         <img 
     src="/logo.png"
-    alt="DelhiBreathe Logo"
+    alt="Eco Breathe Logo"
     className="w-8 h-8 rounded-lg object-cover"
 />
 

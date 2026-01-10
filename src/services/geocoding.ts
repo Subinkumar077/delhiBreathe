@@ -9,7 +9,7 @@ export interface LocationData {
     timestamp: number;
 }
 
-const CACHE_KEY = 'delhibreathe_location_cache';
+const CACHE_KEY = 'ecobreathe_location_cache';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Get cached location from localStorage
@@ -97,7 +97,7 @@ export const reverseGeocode = async (
             {
                 headers: {
                     'Accept': 'application/json',
-                    'User-Agent': 'DelhiBreathe/1.0 (https://delhibreathe.web.app)'
+                    'User-Agent': 'EcoBreathe/1.0 (https://ecobreathe.com)'
                 }
             }
         );

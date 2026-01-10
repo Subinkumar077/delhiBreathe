@@ -11,7 +11,7 @@ class AQIPredictionService:
     
     def load_model(self):
         """Load trained model"""
-        model_path = 'models/aqi_lstm_model.h5'
+        model_path = 'models/aqi_lstm_model.pth'
         scaler_path = 'models/aqi_scaler.pkl'
         
         if os.path.exists(model_path) and os.path.exists(scaler_path):
@@ -23,29 +23,48 @@ class AQIPredictionService:
     def fetch_recent_data(self, hours=30):
         """Fetch data safely - works even if Firebase fails!"""
         try:
-            # 1. Try to get Real Data
-            ref = db.reference('/')
+            # 1. Try to get Real Data from Firebase
+            ref = db.reference('/readings')
             data = ref.get()
             
-            if data and 'aqi' in data:
-                current_aqi = float(data['aqi'])
-                print(f"📡 Fetched real AQI from Firebase: {current_aqi}")
+            if data and isinstance(data, dict):
+                # Extract AQI values from all readings
+                aqi_values = []
+                for key, reading in data.items():
+                    if 'aqi' in reading:
+                        aqi_values.append(float(reading['aqi']))
+                
+                if aqi_values:
+                    # Use the most recent readings (last 30 or all available)
+                    recent_aqi = aqi_values[-min(hours, len(aqi_values)):]
+                    
+                    # If we have fewer than 30 readings, pad with the average
+                    if len(recent_aqi) < hours:
+                        avg_aqi = np.mean(recent_aqi)
+                        padding = [avg_aqi + np.random.normal(0, 2) for _ in range(hours - len(recent_aqi))]
+                        recent_aqi = padding + recent_aqi
+                    
+                    print(f"📡 Fetched {len(aqi_values)} real AQI readings from Firebase")
+                    print(f"📊 Current AQI: {aqi_values[-1]}, Average: {np.mean(aqi_values):.1f}")
+                    return np.array(recent_aqi)
+                else:
+                    raise ValueError("No AQI values found in readings")
             else:
-                raise ValueError("No AQI data in Firebase")
+                raise ValueError("No readings data in Firebase")
 
         except Exception as e:
-            # 2. FALLBACK: If Firebase fails (No key, No internet), use Simulation
+            # 2. FALLBACK: If Firebase fails, use Simulation
             print(f"⚠️ Firebase unavailable ({e}). Using Simulation Mode.")
-            current_aqi = 145.0 + np.random.normal(0, 15) # Random Realistic AQI
-
-        # Generate 30 hours of history based on the current value
-        recent_data = []
-        val = current_aqi
-        for _ in range(hours):
-            val += np.random.normal(0, 2) # Add small random changes
-            recent_data.append(max(0, val))
-        
-        return np.array(recent_data)
+            current_aqi = 145.0 + np.random.normal(0, 15)
+            
+            # Generate 30 hours of history based on simulated value
+            recent_data = []
+            val = current_aqi
+            for _ in range(hours):
+                val += np.random.normal(0, 2)
+                recent_data.append(max(0, val))
+            
+            return np.array(recent_data)
     
     def get_aqi_category(self, aqi):
         if aqi <= 50: return {'category': 'Good', 'color': '#00e400', 'description': 'Air quality is satisfactory'}

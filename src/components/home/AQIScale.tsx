@@ -15,11 +15,23 @@ export default function AQIScale({ currentAqi }: AQIScaleProps) {
     // Calculate percentage position (capped at 100%)
     const percentage = Math.min((currentAqi / 500) * 100, 100);
 
+    // Find current category for screen readers
+    const currentCategory = categories.find(cat => currentAqi >= cat.min && currentAqi <= cat.max);
+
     return (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 hidden sm:block">
+        <section 
+            className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 hidden sm:block"
+            role="region"
+            aria-label="Air Quality Index Scale Reference"
+        >
+            <h3 className="sr-only">AQI Scale: Current level is {currentCategory?.label || 'Unknown'} at {currentAqi}</h3>
             <div className="relative pt-12 pb-2">
                 {/* Color segments */}
-                <div className="h-4 w-full rounded-full flex overflow-hidden shadow-md">
+                <div 
+                    className="h-4 w-full rounded-full flex overflow-hidden shadow-md"
+                    role="img"
+                    aria-label={`AQI scale from 0 to 500, showing categories: ${categories.map(c => `${c.label} (${c.min}-${c.max})`).join(', ')}`}
+                >
                     {categories.map((cat, idx) => (
                         <div
                             key={cat.label}
@@ -78,8 +90,10 @@ export default function AQIScale({ currentAqi }: AQIScaleProps) {
                 <div
                     className="absolute top-5 -translate-y-1/2 w-5 h-5 bg-white border-[3px] border-gray-900 rounded-full shadow-lg z-10 transition-all duration-500 ease-out transform -translate-x-1/2"
                     style={{ left: `${percentage}%`, top: '3.5rem' }}
+                    role="img"
+                    aria-label={`Current AQI position: ${currentAqi}`}
                 />
             </div>
-        </div>
+        </section>
     );
 }
